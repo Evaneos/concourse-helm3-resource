@@ -1,17 +1,22 @@
-FROM alpine/helm:3.8.0
-LABEL maintainer "Yann David (@Typositoire) <davidyann88@gmail>"
+FROM --platform=linux/amd64 alpine/helm:3.13.3
+# Helm supported version along with K8 version: https://helm.sh/docs/topics/version_skew/
 
-#Versions for gcloud,kubectl,doctl
-ARG KUBERNETES_VERSION=1.21.5
-ARG GCLOUD_VERSION=327.0.0
+LABEL maintainer="Yann David (@Typositoire) <davidyann88@gmail>"
+
+# Versions for gcloud, kubectl, doctl, awscli
+# K8 versions: https://kubernetes.io/releases/
+ARG KUBERNETES_VERSION=1.28.7
+ARG GCLOUD_VERSION=416.0.0
 ARG DOCTL_VERSION=1.57.0
+ARG AWSCLI_VERSION=2.15.14-r0
 ARG HELM_PLUGINS_TO_INSTALL="https://github.com/databus23/helm-diff"
+
 
 #gcloud path
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
 #install packages
-RUN apk add --update --upgrade --no-cache jq bash curl git gettext libintl py-pip
+RUN apk add --update --upgrade --no-cache jq bash curl git gettext libintl py-pip aws-cli=${AWSCLI_VERSION}
 
 #install kubectl
 RUN curl -sL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl; \
@@ -21,9 +26,17 @@ RUN curl -sL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes
 RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-linux-x86_64.tar.gz \
     -O /tmp/google-cloud-sdk.tar.gz | bash
 
+# For use with gke-gcloud-auth-plugin below
+# see https://cloud.google.com/blog/products/containers-kubernetes/kubectl-auth-changes-in-gke
+# for details
+ENV USE_GKE_GCLOUD_AUTH_PLUGIN=True
+
 RUN mkdir -p /usr/local/gcloud \
     && tar -C /usr/local/gcloud -xvzf /tmp/google-cloud-sdk.tar.gz \
-    && /usr/local/gcloud/google-cloud-sdk/install.sh -q
+    && /usr/local/gcloud/google-cloud-sdk/install.sh -q \
+    ## auth package is split out now, need explicit install
+    ## --quiet disables interactive prompts
+    && gcloud components install gke-gcloud-auth-plugin --quiet
 
 #copy scripts
 ADD assets /opt/resource
