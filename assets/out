@@ -157,7 +157,7 @@ helm_registry_login() {
     registry_host=$(jq -r '.params.private_registry.generic.host // ""' < $payload)
     registry_username=$(jq -r '.params.private_registry.generic.username // ""' < $payload)
     registry_password=$(jq -r '.params.private_registry.generic.password // ""' < $payload)
-    echo "$registry_password" | helm registry login $host --username $registry_username --password-stdin
+    echo "$registry_password" | helm registry login $registry_host --username $registry_username --password-stdin
     echo "done logging in to generic registry"
   else
     # implement support for other helm registry following a similar pattern
