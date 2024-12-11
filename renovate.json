@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":docker"
+  ],
+  "timezone": "Europe/Paris",
+  "schedule": "* 0 * * 0",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["concourse-helm3-resource.yaml"],
+      "datasourceTemplate": "docker",
+      "matchStringsStrategy": "combination",
+      "matchStrings": [
+        "\\s*repository:\\s*(?<depName>.*)\\s*",
+        "\\s*tag:\\s*(?<currentValue>.*)\\s*"
+      ]
+    }
+  ]
+}
