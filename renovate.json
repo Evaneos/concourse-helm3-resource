@@ -5,6 +5,7 @@
     ":dependencyDashboard",
     ":docker"
   ],
+  "baseBranchPatterns": ["main"],
   "timezone": "Europe/Paris",
   "schedule": "* 0 * * 0",
   "customManagers": [
