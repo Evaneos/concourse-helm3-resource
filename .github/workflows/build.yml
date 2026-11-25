@@ -10,19 +10,36 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Read version
+        id: version
+        run: echo "version=$(head -n1 VERSION | tr -d "[:space:]")" >> "$GITHUB_OUTPUT"
       - name: Login to Docker registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           username: ${{ secrets.DOCKER__USERNAME }}
           password: ${{ secrets.DOCKER__TOKEN }}
+      - name: Refuse to overwrite a published version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if out=$(docker manifest inspect "evaneos/concourse-helm3-resource:${VERSION}" 2>&1); then
+            echo "::error::evaneos/concourse-helm3-resource:${VERSION} already exists, bump VERSION"
+            exit 1
+          fi
+          if ! grep -qiE 'no such manifest|manifest unknown|not found' <<<"$out"; then
+            echo "::error::cannot check whether ${VERSION} exists: $out"
+            exit 1
+          fi
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           context: .
           push: true
           tags: |
+            evaneos/concourse-helm3-resource:${{ steps.version.outputs.version }}
             evaneos/concourse-helm3-resource:latest
