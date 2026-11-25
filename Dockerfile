@@ -9,7 +9,9 @@ ARG KUBERNETES_VERSION=1.28.7
 ARG GCLOUD_VERSION=416.0.0
 ARG DOCTL_VERSION=1.57.0
 ARG AWSCLI_VERSION=2.15.14-r0
-ARG HELM_PLUGINS_TO_INSTALL="https://github.com/databus23/helm-diff"
+# helm-diff 3.13+ needs Helm >= 3.18 (plugin.yaml platformHooks).
+ARG HELM_DIFF_VERSION=v3.12.5
+ARG HELM_PLUGINS_TO_INSTALL=""
 
 
 #gcloud path
@@ -42,6 +44,7 @@ RUN mkdir -p /usr/local/gcloud \
 ADD assets /opt/resource
 
 #install plugins
+RUN helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION}
 RUN for i in $(echo $HELM_PLUGINS_TO_INSTALL | xargs -n1); do helm plugin install $i; done
 
 #install kustomize
